@@ -16,14 +16,14 @@ An end-to-end AI engineering pipeline: live web scraping in, an LLM-enriched and
 
 ## Architecture
 
-```
-Scraper (Hacker News) → Pydantic schema validation → Postgres (news_items)
-                                                              ↓
-                                              LLM enrichment (summary + tags)
-                                                              ↓
-                                        Chunking → Embeddings → pgvector (news_chunks)
-                                                              ↓
-                                          FastAPI: /news, /search, /health
+```mermaid
+flowchart LR
+    A[Scraper<br/>Hacker News] --> B[Pydantic schema<br/>validation]
+    B --> C[(Postgres<br/>news_items)]
+    C --> D[LLM enrichment<br/>summary + tags]
+    D --> E[Chunk + embed<br/>tiktoken, OpenAI]
+    E --> F[(pgvector<br/>news_chunks)]
+    F --> G[FastAPI<br/>/news /search /health]
 ```
 
 Each stage only trusts data the previous stage already validated — a scraper change never touches the database layer, and a database change never touches the API layer.
