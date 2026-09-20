@@ -69,9 +69,8 @@ uv run python -m evaluation.run_evaluation --base-url http://localhost:8001
 ## Known limitations
 
 - Single data source (Hacker News) — the scraper interface supports adding OpenAI, Anthropic, and YouTube as sources, but they aren't implemented yet.
-- No rate limiting or authentication on `/search` — each call costs a real OpenAI embedding request, so the public endpoint currently has no abuse protection.
-- No automated tests yet — correctness has been verified manually and via production logs, not a test suite.
-- No frontend yet — the API is fully functional but only usable via `/docs` (Swagger UI) or direct HTTP calls; a Streamlit interface is in progress.
+- No rate limiting or authentication on `/search` or `/ask` — each call costs a real OpenAI request (an embedding for `/search`; an embedding plus an LLM generation for `/ask`), so both public endpoints currently have no abuse protection.
+- No CI — the scorer unit tests and the 12-case evaluation suite (`evaluation/`) exist and pass, but nothing runs them automatically on push; they're currently run by hand.
 
 ## Run it locally
 
