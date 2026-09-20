@@ -8,3 +8,7 @@ __pycache__/
 
 # macOS
 .DS_Store
+
+# Local agent/assistant tooling state (not part of the project)
+.claude/
+.agents/

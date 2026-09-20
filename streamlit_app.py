@@ -8,6 +8,7 @@ import streamlit as st
 
 API_BASE = "https://ai-news-api-104487450523.us-central1.run.app"
 SEARCH_TIMEOUT = 30  # embedding + vector search takes a moment
+ASK_TIMEOUT = 45  # retrieval + LLM answer generation takes longer than plain search
 NEWS_TIMEOUT = 15
 
 st.set_page_config(
@@ -193,6 +194,71 @@ st.markdown(
         letter-spacing: 0.06em;
         margin-bottom: 0.4rem;
     }}
+
+    /* Tabs */
+    [data-testid="stTabs"] [role="tablist"] {{
+        gap: 1.5rem;
+        border-bottom: 1px solid {NORD["card_border"]};
+    }}
+    [data-testid="stTab"] p {{
+        color: {NORD["muted"]};
+        font-weight: 600;
+        margin: 0;
+    }}
+    [data-testid="stTab"][aria-selected="true"] p {{
+        color: {NORD["accent_bright"]};
+    }}
+    [data-testid="stTab"] .react-aria-SelectionIndicator {{
+        background-color: {NORD["accent_bright"]} !important;
+    }}
+
+    /* Ask: answer box */
+    .answer-box {{
+        background-color: {NORD["card"]};
+        border: 1px solid {NORD["card_border"]};
+        border-left: 4px solid {NORD["accent_bright"]};
+        border-radius: 12px;
+        padding: 1.3rem 1.5rem;
+        margin-bottom: 1.2rem;
+    }}
+    .answer-box.unsupported {{
+        border-left-color: {NORD["muted_dark"]};
+    }}
+    .answer-text {{
+        color: {NORD["text"]};
+        font-size: 1.05rem;
+        line-height: 1.6;
+        margin-bottom: 0.7rem;
+    }}
+    .supported-badge {{
+        display: inline-block;
+        padding: 0.15rem 0.65rem;
+        border-radius: 999px;
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+    }}
+    .supported-badge.yes {{
+        background-color: rgba(163, 190, 140, 0.2);
+        color: #A3BE8C;
+        border: 1px solid #A3BE8C;
+    }}
+    .supported-badge.no {{
+        background-color: rgba(191, 97, 106, 0.2);
+        color: #BF616A;
+        border: 1px solid #BF616A;
+    }}
+    .citation-label {{
+        display: inline-block;
+        background-color: rgba(94, 129, 172, 0.25);
+        color: {NORD["accent_bright"]};
+        border: 1px solid {NORD["accent"]};
+        padding: 0.1rem 0.55rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        margin-right: 0.5rem;
+    }}
     </style>
     """,
     unsafe_allow_html=True,
@@ -216,6 +282,16 @@ def fetch_news_count():
     resp = requests.get(f"{API_BASE}/news/", timeout=NEWS_TIMEOUT)
     resp.raise_for_status()
     return len(resp.json())
+
+
+def fetch_ask_answer(question: str, limit: int = 5):
+    resp = requests.post(
+        f"{API_BASE}/ask/",
+        json={"question": question, "limit": limit},
+        timeout=ASK_TIMEOUT,
+    )
+    resp.raise_for_status()
+    return resp.json()
 
 
 def check_health():
@@ -269,57 +345,120 @@ st.markdown(
 )
 
 # ---------------------------------------------------------------------------
-# Search bar
+# Tabs: Search / Ask
 # ---------------------------------------------------------------------------
-col1, col2 = st.columns([5, 1])
-with col1:
-    query = st.text_input(
-        "Search",
-        placeholder="Search AI news… e.g. \"AI safety\", \"microcode\"",
-        label_visibility="collapsed",
-    )
-with col2:
-    search_clicked = st.button("Search", use_container_width=True)
+tab_search, tab_ask = st.tabs(["🔍 Search", "💬 Ask"])
 
-# ---------------------------------------------------------------------------
-# Results
-# ---------------------------------------------------------------------------
-if search_clicked or query:
-    if not query.strip():
-        st.warning("Type something to search for.")
-    else:
-        try:
-            with st.spinner("Embedding your query and searching…"):
-                results = fetch_search_results(query.strip(), limit=5)
-        except requests.exceptions.Timeout:
-            st.error("The search took too long to respond. Please try again.")
-        except requests.exceptions.ConnectionError:
-            st.error("Couldn't reach the AI News API. Please check your connection and try again.")
-        except requests.exceptions.HTTPError as e:
-            status = e.response.status_code if e.response is not None else "unknown"
-            st.error(f"The API returned an error (status {status}). Please try again shortly.")
-        except requests.exceptions.RequestException:
-            st.error("Something went wrong while searching. Please try again.")
+with tab_search:
+    col1, col2 = st.columns([5, 1])
+    with col1:
+        query = st.text_input(
+            "Search",
+            placeholder="Search AI news… e.g. \"AI safety\", \"microcode\"",
+            label_visibility="collapsed",
+        )
+    with col2:
+        search_clicked = st.button("Search", use_container_width=True, key="search_button")
+
+    if search_clicked or query:
+        if not query.strip():
+            st.warning("Type something to search for.")
         else:
-            if not results:
-                st.info("No results found. Try a different query.")
+            try:
+                with st.spinner("Embedding your query and searching…"):
+                    results = fetch_search_results(query.strip(), limit=5)
+            except requests.exceptions.Timeout:
+                st.error("The search took too long to respond. Please try again.")
+            except requests.exceptions.ConnectionError:
+                st.error("Couldn't reach the AI News API. Please check your connection and try again.")
+            except requests.exceptions.HTTPError as e:
+                status = e.response.status_code if e.response is not None else "unknown"
+                st.error(f"The API returned an error (status {status}). Please try again shortly.")
+            except requests.exceptions.RequestException:
+                st.error("Something went wrong while searching. Please try again.")
             else:
-                st.markdown(
-                    f'<div class="section-label">{len(results)} result'
-                    f'{"s" if len(results) != 1 else ""}</div>',
-                    unsafe_allow_html=True,
-                )
-                for r in results:
-                    score_pct = max(0.0, min(1.0, r["similarity"])) * 100
+                if not results:
+                    st.info("No results found. Try a different query.")
+                else:
                     st.markdown(
-                        f"""
-                        <div class="result-card">
-                            <div class="result-title">
-                                <a href="{r['url']}" target="_blank">{r['title']}</a>
-                            </div>
-                            <div class="result-snippet">{r['chunk_content'][:400].strip()}…</div>
-                            <span class="score-badge">{score_pct:.1f}% match</span>
-                        </div>
-                        """,
+                        f'<div class="section-label">{len(results)} result'
+                        f'{"s" if len(results) != 1 else ""}</div>',
                         unsafe_allow_html=True,
                     )
+                    for r in results:
+                        score_pct = max(0.0, min(1.0, r["similarity"])) * 100
+                        st.markdown(
+                            f"""
+                            <div class="result-card">
+                                <div class="result-title">
+                                    <a href="{r['url']}" target="_blank">{r['title']}</a>
+                                </div>
+                                <div class="result-snippet">{r['chunk_content'][:400].strip()}…</div>
+                                <span class="score-badge">{score_pct:.1f}% match</span>
+                            </div>
+                            """,
+                            unsafe_allow_html=True,
+                        )
+
+with tab_ask:
+    col1, col2 = st.columns([5, 1])
+    with col1:
+        question = st.text_input(
+            "Ask",
+            placeholder="Ask a question… e.g. \"What is Pion and what does it do?\"",
+            label_visibility="collapsed",
+        )
+    with col2:
+        ask_clicked = st.button("Ask", use_container_width=True, key="ask_button")
+
+    if ask_clicked or question:
+        if not question.strip():
+            st.warning("Type a question to ask.")
+        else:
+            try:
+                with st.spinner("Retrieving evidence and generating a grounded answer…"):
+                    result = fetch_ask_answer(question.strip(), limit=5)
+            except requests.exceptions.Timeout:
+                st.error("The answer took too long to generate. Please try again.")
+            except requests.exceptions.ConnectionError:
+                st.error("Couldn't reach the AI News API. Please check your connection and try again.")
+            except requests.exceptions.HTTPError as e:
+                status = e.response.status_code if e.response is not None else "unknown"
+                st.error(f"The API returned an error (status {status}). Please try again shortly.")
+            except requests.exceptions.RequestException:
+                st.error("Something went wrong while asking. Please try again.")
+            else:
+                supported = result.get("supported", False)
+                badge_class = "yes" if supported else "no"
+                badge_text = "Grounded" if supported else "Not grounded"
+                box_class = "" if supported else "unsupported"
+                st.markdown(
+                    f"""
+                    <div class="answer-box {box_class}">
+                        <div class="answer-text">{result['answer']}</div>
+                        <span class="supported-badge {badge_class}">{badge_text}</span>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+                citations = result.get("citations", [])
+                if citations:
+                    st.markdown(
+                        f'<div class="section-label">{len(citations)} citation'
+                        f'{"s" if len(citations) != 1 else ""}</div>',
+                        unsafe_allow_html=True,
+                    )
+                    for i, c in enumerate(citations, start=1):
+                        st.markdown(
+                            f"""
+                            <div class="result-card">
+                                <div class="result-title">
+                                    <span class="citation-label">[{i}]</span>
+                                    <a href="{c['url']}" target="_blank">{c['title']}</a>
+                                </div>
+                                <div class="result-snippet">{c['chunk_content'][:400].strip()}…</div>
+                            </div>
+                            """,
+                            unsafe_allow_html=True,
+                        )
