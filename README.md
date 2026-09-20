@@ -24,7 +24,7 @@ flowchart LR
     C --> D[LLM enrichment<br/>summary + tags]
     D --> E[Chunk + embed<br/>tiktoken, OpenAI]
     E --> F[(pgvector<br/>news_chunks)]
-    F --> G[FastAPI<br/>/news /search /health]
+    F --> G[FastAPI<br/>/news /search /ask /health]
 ```
 
 Each stage only trusts data the previous stage already validated — a scraper change never touches the database layer, and a database change never touches the API layer.
@@ -34,6 +34,30 @@ Each stage only trusts data the previous stage already validated — a scraper c
 The core technical piece: `/search` doesn't do keyword matching. A query gets embedded into a 1536-dimension vector, and Postgres (via `pgvector`'s HNSW index) returns the chunks whose embeddings are closest by inner product — so a search for `"AI safety"` can surface an article that never uses those exact words, as long as it's talking about the same underlying concept.
 
 Built manually rather than through a framework like LangChain — the tokenization, chunking (`tiktoken`, 500-token windows), embedding, and vector-index logic are all hand-written and understood end to end, not abstracted behind a library call.
+
+## Grounded Q&A and evaluation
+
+`POST /ask` answers a question from retrieved article chunks only — the prompt explicitly forbids outside knowledge, and if retrieval doesn't clear a similarity threshold, it returns "Not enough information" instead of guessing. Every answer ships with its supporting citations.
+
+Correctness is checked with a fixed evaluation corpus (`evaluation/`) rather than eyeballing outputs: 4 articles independent of whatever the live scraper has indexed, 12 questions spanning numeric, boolean, and free-text answers, and a deterministic scorer — not an LLM grading itself — that extracts and compares the actual value (a regex for numbers, a canonical true/false match, a normalized substring check for text) rather than trusting a "looks about right" judgment. Three metrics per run:
+
+- **Retrieval accuracy** — did the expected source article get retrieved at all
+- **Answer accuracy** — is the generated answer both marked `supported` and scored correct by the deterministic matcher
+- **End-to-end accuracy** — both of the above together
+
+Latest run:
+
+```
+Retrieval accuracy: 12/12 (100.0%)
+Answer accuracy: 12/12 (100.0%)
+End-to-end accuracy: 12/12 (100.0%)
+```
+
+Reproduce it locally with the app running (`uv run uvicorn app.main:app --reload --port 8001`):
+
+```bash
+uv run python -m evaluation.run_evaluation --base-url http://localhost:8001
+```
 
 ## Real bugs, found and fixed
 
@@ -73,12 +97,14 @@ Python · FastAPI · SQLAlchemy · PostgreSQL + pgvector · OpenAI API (structur
 ```
 app/
   scrapers/     # source-specific scrapers -> NewsItem
-  schemas/      # shared Pydantic models (NewsItem, ArticleEnrichment, SearchResult)
-  agents/       # LLM calls: enrichment (structured output), embeddings
+  schemas/      # shared Pydantic models (NewsItem, ArticleEnrichment, SearchResult, AskRequest/AskResponse)
+  agents/       # LLM calls: enrichment, embeddings, grounded answer generation (structured output)
   database/     # SQLAlchemy models, connection, repository (all DB access isolated here)
   services/     # orchestration: ingestion, enrichment, indexing
-  api/routes/   # FastAPI endpoints: news, search, health
+  api/routes/   # FastAPI endpoints: news, search, ask, health
   pipeline.py   # batch entry point (ingestion -> enrichment -> indexing)
   main.py       # FastAPI app
+evaluation/     # fixed corpus, question set, deterministic scorer, evaluation runner
+streamlit_app.py  # Nord-themed frontend (Search + Ask tabs), deployed on Streamlit Community Cloud
 Dockerfile
 ```

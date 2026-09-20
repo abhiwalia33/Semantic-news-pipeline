@@ -1,6 +1,6 @@
 import unittest
 
-from week6.evaluations.scoring import answer_matches
+from evaluation.scoring import answer_matches
 
 
 class AnswerMatchingTests(unittest.TestCase):
