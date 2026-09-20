@@ -2,6 +2,7 @@
 
 An end-to-end AI engineering pipeline: live web scraping in, an LLM-enriched and embedded database out, semantic search served over a REST API — built to practice the full path from raw scraped data to a production-deployed, cloud-hosted system.
 
+🔗 Live demo: https://semantic-news-pipeline-a2zq3amtbjpt4t8vf7m5ub.streamlit.app/  
 🔗 Live API: https://ai-news-api-104487450523.us-central1.run.app/docs
 
 ## What this project shows
