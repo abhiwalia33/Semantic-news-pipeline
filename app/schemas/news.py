@@ -36,6 +36,7 @@ class SearchResult(BaseModel):
     """A single search result: a matching chunk with its parent article info."""
 
     news_item_id: int
+    source: str
     title: str
     url: HttpUrl
     chunk_content: str

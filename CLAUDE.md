@@ -50,9 +50,9 @@ ai-news-api/
 │   │
 │   ├── scrapers/                # Collect news from external sources
 │   │   ├── base.py              # Common rules for all scrapers
-│   │   ├── openai.py            # Collect OpenAI news
-│   │   ├── anthropic.py         # Collect Anthropic news
-│   │   └── youtube.py           # Collect YouTube content
+│   │   ├── hackernews.py        # Collect Hacker News stories (source: hackernews)
+│   │   ├── rss.py               # Collect AI lab blog feeds (sources: openai_news, deepmind_blog)
+│   │   └── arxiv.py             # Collect recent AI papers (source: arxiv)
 │   │
 │   ├── agents/                  # Use AI to understand/enrich news
 │   │   └── news_agent.py        # Generate summaries and topics

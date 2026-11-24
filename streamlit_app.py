@@ -6,7 +6,11 @@ logic lives here.
 import requests
 import streamlit as st
 
+from streamlit_helpers import esc, safe_url, snippet
+
 API_BASE = "https://ai-news-api-104487450523.us-central1.run.app"
+# Source labels written by the scrapers (see app/scrapers/); "all" means no filter.
+SOURCE_OPTIONS = ["all", "hackernews", "openai_news", "deepmind_blog", "arxiv"]
 SEARCH_TIMEOUT = 30  # embedding + vector search takes a moment
 ASK_TIMEOUT = 45  # retrieval + LLM answer generation takes longer than plain search
 NEWS_TIMEOUT = 15
@@ -166,6 +170,17 @@ st.markdown(
         font-weight: 700;
         letter-spacing: 0.02em;
     }}
+    .source-badge {{
+        display: inline-block;
+        background-color: rgba(76, 86, 106, 0.45);
+        color: {NORD["text_soft"]};
+        border: 1px solid {NORD["muted_dark"]};
+        padding: 0.15rem 0.65rem;
+        border-radius: 999px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        margin-left: 0.4rem;
+    }}
 
     /* Stat tiles */
     .stat-box {{
@@ -268,10 +283,13 @@ st.markdown(
 # ---------------------------------------------------------------------------
 # API calls
 # ---------------------------------------------------------------------------
-def fetch_search_results(query: str, limit: int = 5):
+def fetch_search_results(query: str, limit: int = 5, source: str = "all"):
+    params = {"q": query, "limit": limit}
+    if source != "all":
+        params["source"] = source
     resp = requests.get(
         f"{API_BASE}/search/",
-        params={"q": query, "limit": limit},
+        params=params,
         timeout=SEARCH_TIMEOUT,
     )
     resp.raise_for_status()
@@ -325,7 +343,7 @@ with st.sidebar:
     st.markdown('<div class="section-label">About</div>', unsafe_allow_html=True)
     st.markdown(
         '<span style="color:#9EA7B8; font-size:0.9rem;">'
-        "Semantic search over Hacker News articles, powered by OpenAI "
+        "Semantic search over Hacker News, AI lab blogs and arXiv, powered by OpenAI "
         "embeddings and pgvector similarity search.</span>",
         unsafe_allow_html=True,
     )
@@ -350,12 +368,20 @@ st.markdown(
 tab_search, tab_ask = st.tabs(["🔍 Search", "💬 Ask"])
 
 with tab_search:
-    col1, col2 = st.columns([5, 1])
+    col1, col_source, col2 = st.columns([4, 1.3, 1])
     with col1:
         query = st.text_input(
             "Search",
             placeholder="Search AI news… e.g. \"AI safety\", \"microcode\"",
             label_visibility="collapsed",
+        )
+    with col_source:
+        source = st.selectbox(
+            "Source",
+            SOURCE_OPTIONS,
+            index=0,
+            label_visibility="collapsed",
+            key="search_source",
         )
     with col2:
         search_clicked = st.button("Search", use_container_width=True, key="search_button")
@@ -366,7 +392,7 @@ with tab_search:
         else:
             try:
                 with st.spinner("Embedding your query and searching…"):
-                    results = fetch_search_results(query.strip(), limit=5)
+                    results = fetch_search_results(query.strip(), limit=5, source=source)
             except requests.exceptions.Timeout:
                 st.error("The search took too long to respond. Please try again.")
             except requests.exceptions.ConnectionError:
@@ -387,14 +413,17 @@ with tab_search:
                     )
                     for r in results:
                         score_pct = max(0.0, min(1.0, r["similarity"])) * 100
+                        # .get(): older API deployments don't return "source"
+                        source_label = esc(r.get("source") or "unknown")
                         st.markdown(
                             f"""
                             <div class="result-card">
                                 <div class="result-title">
-                                    <a href="{r['url']}" target="_blank">{r['title']}</a>
+                                    <a href="{safe_url(r['url'])}" target="_blank">{esc(r['title'])}</a>
                                 </div>
-                                <div class="result-snippet">{r['chunk_content'][:400].strip()}…</div>
+                                <div class="result-snippet">{snippet(r['chunk_content'])}…</div>
                                 <span class="score-badge">{score_pct:.1f}% match</span>
+                                <span class="source-badge">{source_label}</span>
                             </div>
                             """,
                             unsafe_allow_html=True,
@@ -435,7 +464,7 @@ with tab_ask:
                 st.markdown(
                     f"""
                     <div class="answer-box {box_class}">
-                        <div class="answer-text">{result['answer']}</div>
+                        <div class="answer-text">{esc(result['answer'])}</div>
                         <span class="supported-badge {badge_class}">{badge_text}</span>
                     </div>
                     """,
@@ -455,9 +484,9 @@ with tab_ask:
                             <div class="result-card">
                                 <div class="result-title">
                                     <span class="citation-label">[{i}]</span>
-                                    <a href="{c['url']}" target="_blank">{c['title']}</a>
+                                    <a href="{safe_url(c['url'])}" target="_blank">{esc(c['title'])}</a>
                                 </div>
-                                <div class="result-snippet">{c['chunk_content'][:400].strip()}…</div>
+                                <div class="result-snippet">{snippet(c['chunk_content'])}…</div>
                             </div>
                             """,
                             unsafe_allow_html=True,

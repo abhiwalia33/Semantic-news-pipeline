@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/" xmlns:arxiv="http://arxiv.org/schemas/atom">
+  <id>https://arxiv.org/api/example</id>
+  <title>arXiv Query: search_query=cat:cs.AI OR cat:cs.CL OR cat:cs.LG</title>
+  <updated>2026-11-24T00:00:00Z</updated>
+  <opensearch:totalResults>3</opensearch:totalResults>
+  <opensearch:startIndex>0</opensearch:startIndex>
+  <opensearch:itemsPerPage>3</opensearch:itemsPerPage>
+  <entry>
+    <id>http://arxiv.org/abs/2611.31240v1</id>
+    <title>Pruning Autonomous Driving VLAs: What to Preserve for Reasoning and Action</title>
+    <updated>2026-11-23T18:59:52Z</updated>
+    <link href="https://arxiv.org/abs/2611.31240v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2611.31240v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Reasoning vision-language-action (VLA) models for autonomous driving use
+chain-of-thought (CoT) reasoning to guide action generation, but incur substantial
+memory and computational costs.</summary>
+    <category term="cs.CV" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-11-23T18:59:52Z</published>
+    <arxiv:primary_category term="cs.CV"/>
+    <author><name>Seongchan Kim</name></author>
+    <author><name>Soowon Son</name></author>
+    <author><name>Seungryong Kim</name></author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2611.30001v2</id>
+    <title>A Revised Paper
+  With a Wrapped Title</title>
+    <updated>2026-11-22T10:00:00Z</updated>
+    <link href="https://arxiv.org/abs/2611.30001v2" rel="alternate" type="text/html"/>
+    <summary>Second version of an abstract.</summary>
+    <published>2026-11-20T10:00:00Z</published>
+    <author><name>Single Author</name></author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/cs/0112017v1</id>
+    <title>An Old-Style Identifier Paper</title>
+    <updated>2001-12-01T00:00:00Z</updated>
+    <link href="https://arxiv.org/abs/cs/0112017v1" rel="alternate" type="text/html"/>
+    <summary>Legacy abstract.</summary>
+    <published>2001-12-01T00:00:00Z</published>
+  </entry>
+</feed>

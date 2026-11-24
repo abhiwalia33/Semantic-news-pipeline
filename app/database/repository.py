@@ -72,17 +72,23 @@ def get_unindexed_news_items(db: Session) -> list[NewsItemModel]:
     )
 
 
-def search_similar_chunks(db: Session, query_embedding: list[float], limit: int = 5):
-    """Find the most similar chunks to a query embedding, joined with their parent article."""
+def search_similar_chunks(
+    db: Session, query_embedding: list[float], limit: int = 5, source: str | None = None
+):
+    """Find the most similar chunks to a query embedding, joined with their parent article.
+
+    If `source` is given, only chunks from articles with that source are returned.
+    """
     distance = NewsChunkModel.embedding.max_inner_product(query_embedding)
 
-    return (
-        db.query(NewsChunkModel, NewsItemModel, distance.label("distance"))
-        .join(NewsItemModel, NewsChunkModel.news_item_id == NewsItemModel.id)
-        .order_by(distance)
-        .limit(limit)
-        .all()
+    query = db.query(NewsChunkModel, NewsItemModel, distance.label("distance")).join(
+        NewsItemModel, NewsChunkModel.news_item_id == NewsItemModel.id
     )
+    if source:
+        # Bound parameter, not string-built SQL
+        query = query.filter(NewsItemModel.source == source)
+
+    return query.order_by(distance).limit(limit).all()
 
 
 def insert_news_chunks(db: Session, news_item_id: int, chunks: list[dict]) -> None:

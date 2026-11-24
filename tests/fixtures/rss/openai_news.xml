@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <channel>
+    <title>OpenAI News</title>
+    <link>https://openai.com/news</link>
+    <description>OpenAI News</description>
+    <item>
+      <title><![CDATA[Searching for distant planets with Astra]]></title>
+      <description><![CDATA[See how two amateur astronomers used Codex and Astra to find potential exoplanets in public data from NASA's Kepler and TESS space telescopes.]]></description>
+      <link>https://openai.com/index/searching-for-distant-planets-with-astra</link>
+      <guid isPermaLink="true">https://openai.com/index/searching-for-distant-planets-with-astra</guid>
+      <category><![CDATA[Stories]]></category>
+      <pubDate>Tue, 24 Nov 2026 11:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title><![CDATA[Second story without a guid]]></title>
+      <description><![CDATA[Short teaser text.]]></description>
+      <link>https://openai.com/index/second-story</link>
+      <pubDate>Mon, 23 Nov 2026 09:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title><![CDATA[Third story]]></title>
+      <description><![CDATA[Another teaser.]]></description>
+      <link>https://openai.com/index/third-story</link>
+      <guid isPermaLink="true">https://openai.com/index/third-story</guid>
+    </item>
+  </channel>
+</rss>

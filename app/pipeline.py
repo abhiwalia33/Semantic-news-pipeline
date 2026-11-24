@@ -1,5 +1,7 @@
 """Batch ingestion/enrichment entry point."""
 
+import logging
+
 from app.services.enrichment import run_enrichment
 from app.services.indexing import run_indexing
 from app.services.ingestion import run_ingestion
@@ -12,4 +14,5 @@ def run_pipeline() -> None:
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
     run_pipeline()

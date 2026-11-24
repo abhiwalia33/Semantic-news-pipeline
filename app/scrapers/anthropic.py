@@ -1,1 +1,0 @@
-# Anthropic news scraper

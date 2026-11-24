@@ -9,7 +9,7 @@ An end-to-end AI engineering pipeline: live web scraping in, an LLM-enriched and
 
 | Layer | What it demonstrates |
 |---|---|
-| Scraping & validation | Live Hacker News scraping, article extraction, normalized into a strict Pydantic schema — bad data rejected at the boundary, not discovered downstream |
+| Scraping & validation | Live scraping of Hacker News, AI lab blogs (OpenAI, Google DeepMind) and arXiv, article extraction, normalized into a strict Pydantic schema — bad data rejected at the boundary, not discovered downstream |
 | Structured LLM output | OpenAI's structured output (not free-text parsing) for article summarization and tagging, validated against a Pydantic model before it ever reaches storage |
 | Semantic search (RAG-lite) | Articles chunked, embedded (`text-embedding-3-small`), and indexed in Postgres via `pgvector`; search ranks results by vector similarity, not keyword matching |
 | Cloud deployment | Containerized with Docker, deployed as a Cloud Run **Service** (the live API) and a separate Cloud Run **Job** (the batch pipeline), with credentials in Secret Manager and a hosted Postgres database on Supabase |
@@ -19,7 +19,7 @@ An end-to-end AI engineering pipeline: live web scraping in, an LLM-enriched and
 
 ```mermaid
 flowchart LR
-    A[Scraper<br/>Hacker News] --> B[Pydantic schema<br/>validation]
+    A[Scrapers<br/>Hacker News · AI lab blogs · arXiv] --> B[Pydantic schema<br/>validation]
     B --> C[(Postgres<br/>news_items)]
     C --> D[LLM enrichment<br/>summary + tags]
     D --> E[Chunk + embed<br/>tiktoken, OpenAI]
@@ -68,7 +68,7 @@ uv run python -m evaluation.run_evaluation --base-url http://localhost:8001
 
 ## Known limitations
 
-- Single data source (Hacker News) — the scraper interface supports adding OpenAI, Anthropic, and YouTube as sources, but they aren't implemented yet.
+- Four sources: `hackernews`, `openai_news`, `deepmind_blog` (RSS) and `arxiv` (cs.AI / cs.CL / cs.LG). Adding an RSS feed means adding it to `DEFAULT_FEEDS` in `app/scrapers/rss.py` and to `SOURCE_OPTIONS` in `streamlit_app.py`; there is no Anthropic or YouTube source.
 - No rate limiting or authentication on `/search` or `/ask` — each call costs a real OpenAI request (an embedding for `/search`; an embedding plus an LLM generation for `/ask`), so both public endpoints currently have no abuse protection.
 - No CI — the scorer unit tests and the 12-case evaluation suite (`evaluation/`) exist and pass, but nothing runs them automatically on push; they're currently run by hand.
 

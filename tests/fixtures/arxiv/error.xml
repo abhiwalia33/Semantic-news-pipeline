@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <id>https://arxiv.org/api/example</id>
+  <title>arXiv Query: error</title>
+  <updated>2026-11-24T00:00:00Z</updated>
+  <entry>
+    <id>http://arxiv.org/api/errors#incorrect_id_format_for_bad</id>
+    <title>Error</title>
+    <summary>incorrect id format for bad</summary>
+    <updated>2026-11-24T00:00:00Z</updated>
+    <link href="http://arxiv.org/api/errors#incorrect_id_format_for_bad" rel="alternate" type="text/html"/>
+    <author><name>arXiv api core</name></author>
+  </entry>
+</feed>
