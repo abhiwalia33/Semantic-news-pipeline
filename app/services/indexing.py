@@ -1,6 +1,6 @@
 import tiktoken
 
-from app.agents.embedding_agent import EMBEDDING_MODEL, create_embedding
+from app.agents.embedding_agent import EMBEDDING_MODEL, create_embeddings
 from app.database.connection import SessionLocal
 from app.database.repository import get_unindexed_news_items, insert_news_chunks
 
@@ -24,9 +24,11 @@ def run_indexing() -> None:
         for item in get_unindexed_news_items(db):
             text_chunks = _chunk_text(item.content)
 
+            embeddings = create_embeddings(text_chunks)
+
             chunks = [
-                {"content": chunk_text, "embedding": create_embedding(chunk_text)}
-                for chunk_text in text_chunks
+                {"content": chunk_text, "embedding": embedding}
+                for chunk_text, embedding in zip(text_chunks, embeddings, strict=True)
             ]
 
             insert_news_chunks(db, item.id, chunks)

@@ -15,4 +15,6 @@ def run_pipeline() -> None:
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
+    # The OpenAI SDK's HTTP library logs every request at INFO.
+    logging.getLogger("httpx2").setLevel(logging.WARNING)
     run_pipeline()
