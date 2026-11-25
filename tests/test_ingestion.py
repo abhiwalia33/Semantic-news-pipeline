@@ -68,7 +68,21 @@ class FakeRepository:
         return mock.Mock(title=item.title)
 
 
-class RunIngestionTests(unittest.TestCase):
+class CleanEnvTestCase(unittest.TestCase):
+    """Remove env vars the ingestion code reads, so the caller's shell can't
+    affect results; patch.dict restores the original environment afterwards."""
+
+    ENV_VARS = (ingestion.LIMIT_ENV_VAR,)
+
+    def setUp(self):
+        patcher = mock.patch.dict(os.environ)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        for name in self.ENV_VARS:
+            os.environ.pop(name, None)
+
+
+class RunIngestionTests(CleanEnvTestCase):
     def run_with(self, scrapers, repo=None, **kwargs):
         repo = repo or FakeRepository()
         session = FakeSession()
@@ -134,7 +148,7 @@ class RunIngestionTests(unittest.TestCase):
         self.assertEqual(a.limits, [30])
 
 
-class DefaultScrapersTests(unittest.TestCase):
+class DefaultScrapersTests(CleanEnvTestCase):
     def test_all_sources_with_expected_limits(self):
         configured = {s.source: limit for s, limit in ingestion.default_scrapers()}
         expected = {"hackernews": 30, "arxiv": 20}

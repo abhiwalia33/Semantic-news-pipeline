@@ -97,3 +97,15 @@ ai-news-api/
 - The API should not scrape news during a request.
 - Build incrementally.
 
+# Working rules
+
+- Branch `portfolio-upgrade` holds the multi-source work (hackernews, openai_news,
+  deepmind_blog, arxiv). Don't merge or push to main until the new version is deployed
+  and the pipeline has run on the cloud database: README.md describes the new sources
+  and the live demo doesn't have them yet.
+- Never commit or push without being asked. Don't commit if tests fail.
+- Never print, create or commit secrets or .env contents.
+- Run tests with `uv run pytest`. INGEST_LIMIT is only for small local pipeline runs
+  and must not affect tests.
+- The local database is the Docker container `pgvector-db`. Check that DATABASE_URL
+  points to localhost before any run that writes to the database.
